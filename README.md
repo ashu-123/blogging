@@ -56,10 +56,10 @@ This is a full-stack blog application built with **Spring Boot** and **Angular 1
 ### 🔧 Backend Setup (Spring Boot)
 
 1. Clone the repository:
-   ```bash
+```bash
    git clone https://github.com/ashu-123/blogging
    cd blogging/blog
-   ```
+ ```
 
 2. Configure your application.yml:
 
