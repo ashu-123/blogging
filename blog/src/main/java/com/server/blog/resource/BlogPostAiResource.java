@@ -20,7 +20,10 @@ public class BlogPostAiResource {
     @GetMapping("/{message}")
     public ResponseEntity<String[]> getAnswer(@PathVariable String message){
 
-        String input = "Give me 3 better alternatives for the following blog post name: " + message;
+        String input = """
+                Give me 3 better alternatives for the following blog post name in a numbered list fashion.
+                Do not return anything else except for a list of 3 blog name suggestions. The blog post name is : 
+                """ + message;
         ChatResponse chatResponse = chatClient
                 .prompt(input)
                 .call()
