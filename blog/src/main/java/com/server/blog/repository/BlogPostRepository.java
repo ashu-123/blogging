@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface BlogPostRepository extends JpaRepository<BlogPost, Long> {
 
-    List<BlogPost> findByNameContaining(String name);
+    List<BlogPost> findByTitleContaining(String name);
 }
