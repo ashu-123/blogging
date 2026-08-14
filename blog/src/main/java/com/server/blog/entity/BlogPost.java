@@ -2,6 +2,8 @@ package com.server.blog.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.Date;
 import java.util.List;
@@ -32,6 +34,7 @@ public class BlogPost {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false, foreignKey = @ForeignKey(name = "fk_blog_author"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Author author;
 
     private int likeCount;
