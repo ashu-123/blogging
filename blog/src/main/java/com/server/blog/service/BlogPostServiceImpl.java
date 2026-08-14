@@ -45,7 +45,7 @@ public class BlogPostServiceImpl implements BlogPostService{
     }
 
     public List<BlogPost> searchBlogPostByName(String name) {
-        return blogPostRepository.findByNameContaining(name);
+        return blogPostRepository.findByTitleContaining(name);
     }
 
     private BlogPost incrementViewCount(BlogPost blog) {

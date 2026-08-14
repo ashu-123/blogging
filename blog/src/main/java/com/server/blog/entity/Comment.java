@@ -20,6 +20,6 @@ public class Comment {
     private String postedBy;
 
     @ManyToOne
-    @JoinColumn(name = "blog_post_id", nullable = false)
+    @JoinColumn(name = "blogs_id", nullable = false)
     private BlogPost blogPost;
 }
