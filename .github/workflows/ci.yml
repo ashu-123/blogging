@@ -72,8 +72,6 @@ jobs:
             echo "New Spring Boot version deployed successfully!"
 
 
-frontend - 
-
 name: Angular Frontend CI/CD
 
 on:
