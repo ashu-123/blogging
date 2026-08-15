@@ -39,13 +39,13 @@ export class CreateBlogPostComponent implements OnInit{
       postedBy: [null, Validators.required]
     });
 
-    this.postForm.get('name')?.valueChanges
-    .pipe(
-      debounceTime(1000), // wait 500ms after user stops typing
-      distinctUntilChanged()
-    )
-    .subscribe(
-      val => this.blogPostService.getSuggestionsForBlogPostName(val).subscribe(res => this.filteredSuggestions = res));
+    // this.postForm.get('name')?.valueChanges
+    // .pipe(
+    //   debounceTime(1000), // wait 500ms after user stops typing
+    //   distinctUntilChanged()
+    // )
+    // .subscribe(
+    //   val => this.blogPostService.getSuggestionsForBlogPostName(val).subscribe(res => this.filteredSuggestions = res));
   }
 
   add(event:any) {

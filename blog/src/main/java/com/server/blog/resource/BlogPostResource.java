@@ -4,6 +4,8 @@ import com.server.blog.entity.BlogPost;
 import com.server.blog.service.BlogPostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +24,8 @@ public class BlogPostResource {
     }
 
     @PostMapping
-    public ResponseEntity<BlogPost> createBlogPost(@RequestBody BlogPost blogPost) {
+    public ResponseEntity<BlogPost> createBlogPost(@RequestBody BlogPost blogPost, @AuthenticationPrincipal Jwt jwt) {
+        jwt.getClaims().forEach((k, v) -> System.out.println("claim= " + k + " ,value= " + v));
         BlogPost createdBlogPost = blogPostService.saveBlogPost(blogPost);
         return ResponseEntity.status(CREATED).body(createdBlogPost);
     }

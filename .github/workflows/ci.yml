@@ -1,0 +1,121 @@
+name: Spring Boot Backend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "blog/**" ] # Triggers ONLY when files inside the backend folder change
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./blog # Tells GitHub to run all commands inside the backend folder
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: './blog/pom.xml' # Fixes cache path for monorepos
+
+      - name: Build and Run Tests
+        run: mvn clean package
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-boot-app
+          path: blog/target/*.jar # Points to the generated JAR file location
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spring-boot-app
+          path: blog/target/
+
+      - name: Copy JAR to AWS EC2 via SSH/SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: "54.91.141.171"
+          username: "ubuntu"
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "blog/target/*.jar"
+          target: "/home/ubuntu/app/"
+          strip_components: 2 # Strips 'backend/target' so only the .jar drops into /app/
+
+      - name: Restart Application on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: "54.91.141.171"
+          username: "ubuntu"
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            PID=$(ps aux | grep 'blog-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
+            if [ -n "$PID" ]; then
+              echo "Stopping current running backend instance (PID: $PID)..."
+              kill -15 $PID
+              sleep 5
+            fi
+            
+            cd /home/ubuntu/app/
+            > nohup.out
+            nohup java -jar blog-0.0.1-SNAPSHOT.jar > nohup.out 2>&1 &
+            echo "New Spring Boot version deployed successfully!"
+
+
+frontend - 
+
+name: Angular Frontend CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "blog-ui/**" ] # Triggers ONLY when files inside the frontend folder change
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./blog-ui # Tells GitHub to run all commands inside the frontend folder
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './blog-ui/package-lock.json' # Fixes cache path for monorepos
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Frontend Tests
+        run: npm run test -- --watch=false --browsers=ChromeHeadless
+        continue-on-error: true # Prevents pipeline from stopping if you haven't written tests yet
+
+      - name: Build Production Bundle
+        run: npm run build -- --configuration=production
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1" # Replace with your exact AWS S3 region
+
+      - name: Sync Production Build Assets to Amazon S3 Bucket
+        run: |
+          # Sync command points directly to the compilation subfolder inside frontend
+          aws s3 sync dist/blogweb/browser/ s3://github-test-blog --delete
