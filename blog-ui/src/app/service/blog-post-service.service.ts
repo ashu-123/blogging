@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 const BASIC_URL = "http://54.91.141.171:8080";
 
 @Injectable({
-  
   providedIn: 'root'
 })
 export class BlogPostServiceService {
