@@ -25,7 +25,7 @@ public class BlogPostResource {
 
     @PostMapping
     public ResponseEntity<BlogPost> createBlogPost(@RequestBody BlogPost blogPost, @AuthenticationPrincipal Jwt jwt) {
-        jwt.getClaims().forEach((k, v) -> System.out.println("claim= " + k + " ,value= " + v));
+        jwt.getClaims().forEach((k, v) -> System.out.println("claim=  " + k + " ,value= " + v));
         BlogPost createdBlogPost = blogPostService.saveBlogPost(blogPost);
         return ResponseEntity.status(CREATED).body(createdBlogPost);
     }
