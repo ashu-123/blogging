@@ -60,15 +60,43 @@ jobs:
           username: "ubuntu"
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # 1. Update package managers and ensure Java 21 is installed
+            sudo apt-get update -y
+            if ! type java > /dev/null 2>&1; then
+                echo "Java not found. Installing OpenJDK 21..."
+                sudo apt-get install -y openjdk-21-jre-headless
+            else
+                # Verify it is actually version 21, otherwise upgrade it
+                JAVA_VER=$(java -version 2>&1 | head -n 1 | awk -F '"' '{print $2}' | cut -d'.' -f1)
+                if [ "$JAVA_VER" != "21" ]; then
+                    echo "Incorrect Java version ($JAVA_VER) found. Upgrading to OpenJDK 21..."
+                    sudo apt-get install -y openjdk-21-jre-headless
+                fi
+            fi
+
+            # 2. Safely stop the existing process
             PID=$(ps aux | grep 'blog-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print $2}')
             if [ -n "$PID" ]; then
               echo "Stopping current running backend instance (PID: $PID)..."
               kill -15 $PID
               sleep 5
+              # Force kill if it's still hanging
+              kill -9 $PID 2>/dev/null || true
             fi
             
+            # 3. Clean environment and start the app
             cd /home/ubuntu/app/
-            > nohup.out
+            rm -f nohup.out app.log
+            
+            echo "Starting Spring Boot application..."
             nohup java -jar blog-0.0.1-SNAPSHOT.jar > nohup.out 2>&1 &
-            echo "New Spring Boot version deployed successfully!"
-
+            
+            # 4. Brief sanity check to ensure it didn't instantly crash
+            sleep 3
+            if ps -p $! > /dev/null; then
+              echo "New Spring Boot version deployed successfully!"
+            else
+              echo "ERROR: Application crashed immediately upon launch! Checking last 20 lines of logs:"
+              cat nohup.out | tail -n 20
+              exit 1
+            fi
